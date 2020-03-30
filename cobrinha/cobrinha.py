@@ -6,11 +6,12 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+BLUE = (0,0,255)
 
 
 def on_grid_random():
     x = random.randint(0, 590)
-    y = random.randint(0, 590)
+    y = random.randint(50, 590)
     return (x//10 * 10, y//10 * 10)
 
 
@@ -19,7 +20,7 @@ def collision(c1, c2):
 
 
 def wall_collision(c1, c2):
-    return (c1[0] == c2[0]+10 or c1[1] == c2[1]+10 or c1[1] == -10 or c1[0] == -10)
+    return (c1[0] == c2[0]+10 or c1[1] == c2[1]+10 or c1[1] == 40 or c1[0] == -10)
 
 
 def SCORE(win, score):
@@ -46,7 +47,7 @@ def main():
     screen = pygame.display.set_mode(window)
     pygame.display.set_caption("Cobrinha")
 
-    snake = [(100, 100), (110, 100), (120, 100)]
+    snake = [(300, 300), (310, 300), (320, 300)]
     direction = LEFT
     SNAKE_SKIN = pygame.Surface((10, 10))
     SNAKE_SKIN.fill(WHITE)
@@ -58,9 +59,13 @@ def main():
 
     clock = pygame.time.Clock()
 
-    while done:
-        clock.tick(SPEED)
+    f = open('score.txt','r')
+    H_score = int(f.read())
+    f.close()
 
+    while done:
+
+        clock.tick(SPEED)
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
@@ -68,25 +73,28 @@ def main():
             if event.type == KEYDOWN:
 
                 if event.key == K_DOWN:
-                    direction = DOWN
+                    if direction != UP:
+                        direction = DOWN
 
                 if event.key == K_UP:
-                    direction = UP
+                    if direction != DOWN:
+                        direction = UP
 
                 if event.key == K_LEFT:
-                    direction = LEFT
+                    if direction != RIGHT:    
+                        direction = LEFT
 
                 if event.key == K_RIGHT:
-                    direction = RIGHT
+                    if direction != LEFT:
+                        direction = RIGHT
 
         if collision(snake[0], apple_pos):
             apple_pos = on_grid_random()
             snake.append((0, 0))
-            SPEED = SPEED+1
+            SPEED = SPEED+0.5
             score = score+1
 
-        if wall_collision(snake[0], window):
-            done = False
+        
 
         for i in range(len(snake)-1, 0, -1):
             snake[i] = (snake[i-1][0], snake[i-1][1])
@@ -94,26 +102,50 @@ def main():
         if direction == UP:
             snake[0] = (snake[0][0], snake[0][1] - 10)
 
-        if direction == DOWN:
+        elif direction == DOWN:
             snake[0] = (snake[0][0], snake[0][1] + 10)
 
-        if direction == LEFT:
+        elif direction == LEFT:
             snake[0] = (snake[0][0] - 10, snake[0][1])
 
-        if direction == RIGHT:
+        elif direction == RIGHT:
             snake[0] = (snake[0][0] + 10, snake[0][1])
 
-        screen.fill(BLACK)
+        #fill screen with background color
+        screen.fill(BLUE)
+        #print apple
         screen.blit(apple, apple_pos)
 
+        #score
         largeFont = pygame.font.SysFont('comicsans', 30)  # Font object
         text = largeFont.render(str(score), 1, WHITE)  # create our text
         screen.blit(text, (10, 10))  # draw the text to the screen
 
+        #HIGH SCORE
+        largeFont = pygame.font.SysFont('comicsans', 30)  # Font object
+        text = largeFont.render('HIGHSCORE:' + str(H_score), 1, WHITE)  # create our text
+        screen.blit(text, (430, 10))  # draw the text to the screen
+
+        #movement
         for pos in snake:
             screen.blit(SNAKE_SKIN, pos)
+        
+        #score line
+        pygame.draw.lines(screen, WHITE, True, [(0,40),(600,40)], 5)
 
+        #WALL Collision - 'die'
+        if wall_collision(snake[0], window):
+            done = False
         pygame.display.update()
 
+        for i in range(len(snake)-1, 0, -1):
+            if snake[0] == snake[i]:
+                done = False
 
+    if score > H_score:
+        f = open('score.txt','w')
+        f.write(str(score))
+        f.close()
+
+    
 main()
